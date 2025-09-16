@@ -29,7 +29,8 @@
 }
 
 .warm-transfer-subtitle {
-  color: #1f2937;
+  color: #000000;
+  font-weight: 500;
 }
 
 /* Grid Layout */
@@ -69,8 +70,8 @@
 .form-label {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #111827;
+  font-weight: 600;
+  color: #000000;
   margin-bottom: 0.5rem;
 }
 
@@ -80,6 +81,8 @@
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   transition: all 0.2s;
+  color: #000000;
+  font-weight: 500;
 }
 
 .form-input:focus {
@@ -180,13 +183,14 @@
 
 .btn-small {
   font-size: 0.875rem;
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #e5e7eb;
+  color: #000000;
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
   transition: background-color 0.2s;
   border: none;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .btn-small:hover {
@@ -204,8 +208,8 @@
 .separator-text {
   text-align: center;
   font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
+  color: #000000;
+  font-weight: 600;
   margin: 0.25rem 0;
 }
 
@@ -281,14 +285,16 @@
 
 .transfer-summary {
   font-size: 0.875rem;
-  color: #374151;
+  color: #000000;
   margin-bottom: 0.5rem;
   line-height: 1.4;
+  font-weight: 500;
 }
 
 .transfer-time {
   font-size: 0.75rem;
-  color: #4b5563;
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .btn-join-transfer {
@@ -334,21 +340,24 @@
 }
 
 .call-time {
-  color: #6b7280;
+  color: #1f2937;
   font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .call-room {
   font-size: 0.875rem;
-  color: #374151;
+  color: #000000;
+  font-weight: 500;
 }
 
 .room-name {
   font-family: monospace;
-  background-color: #f3f4f6;
+  background-color: #e5e7eb;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
-  color: #1f2937;
+  color: #000000;
+  font-weight: 600;
 }
 
 .btn-auto-join {
@@ -402,6 +411,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #000000;
 }
 
 .control-buttons {
@@ -433,8 +443,9 @@
 }
 
 .control-btn-normal {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #e5e7eb;
+  color: #000000;
+  font-weight: 600;
 }
 
 .control-btn-normal:hover {
@@ -451,8 +462,9 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #000000;
   margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .participants-list {
@@ -473,8 +485,9 @@
 }
 
 .participant-other {
-  background-color: #f9fafb;
-  color: #374151;
+  background-color: #f3f4f6;
+  color: #000000;
+  font-weight: 500;
 }
 
 /* Transfer Controls */
@@ -516,6 +529,7 @@
 .transcript-title {
   font-size: 1.125rem;
   font-weight: 600;
+  color: #000000;
 }
 
 .transcript-buttons {
@@ -534,15 +548,17 @@
 }
 
 .transcript-text {
-  color: #1f2937;
+  color: #000000;
   font-size: 0.875rem;
   line-height: 1.6;
+  font-weight: 500;
 }
 
 .transcript-placeholder {
-  color: #6b7280;
+  color: #374151;
   font-size: 0.875rem;
   font-style: italic;
+  font-weight: 500;
 }
 
 .transcript-input {
@@ -552,6 +568,8 @@
   border-radius: 0.375rem;
   resize: none;
   margin-top: 1rem;
+  color: #000000;
+  font-weight: 500;
 }
 
 .transcript-input:focus {
@@ -574,6 +592,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #000000;
 }
 
 .summary-content {
@@ -601,6 +620,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #000000;
 }
 
 .logs-display {
@@ -619,8 +639,9 @@
 }
 
 .logs-placeholder {
-  color: #6b7280;
+  color: #374151;
   font-style: italic;
+  font-weight: 500;
 }
 
 /* Transfer Modal */
@@ -692,8 +713,8 @@
 
 .status-text {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #000000;
   text-transform: capitalize;
 }
 
@@ -765,8 +786,9 @@
 
 .agent-script-note {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #374151;
   margin-top: 0.5rem;
+  font-weight: 500;
 }
 
 /* Transfer Details */
@@ -796,16 +818,19 @@
 }
 
 .transfer-detail-label {
-  color: #6b7280;
+  color: #1f2937;
+  font-weight: 600;
 }
 
 .transfer-detail-value {
   font-family: "Courier New", monospace;
-  color: #1f2937;
+  color: #000000;
+  font-weight: 600;
 }
 
 .transfer-detail-value-normal {
-  color: #1f2937;
+  color: #000000;
+  font-weight: 600;
 }
 
 /* Modal Actions */
@@ -877,10 +902,11 @@
 
 .instructions-list {
   font-size: 0.875rem;
-  color: #374151;
+  color: #000000;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  font-weight: 500;
 }
 
 /* Status Bar */
@@ -926,13 +952,14 @@
 
 .connection-text {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #000000;
 }
 
 .status-room {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #000000;
+  font-weight: 500;
 }
 
 .status-room-name {
@@ -964,7 +991,8 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #000000;
+  font-weight: 500;
 }
 
 .status-role {

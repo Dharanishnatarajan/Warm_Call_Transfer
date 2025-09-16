@@ -1,15 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Room, RoomEvent, Track, createLocalAudioTrack, ParticipantEvent } from "livekit-client"
-
-import type {
-  Participant,
-  LocalAudioTrack,
-  RemoteTrack,
-  RemoteAudioTrack,
-  TrackPublication,
-  AudioCaptureOptions,
+import { 
+  Room, 
+  RoomEvent, 
+  Track, 
+  createLocalAudioTrack, 
+  ParticipantEvent,
 } from "livekit-client"
 
 import { Phone, PhoneOff, Users, Mic, MicOff, Volume2, VolumeX, Loader2 } from "lucide-react"
@@ -62,17 +59,17 @@ export default function WarmTransferPage() {
   })
 
   // Room and connection states
-  const [room, setRoom] = useState<Room | null>(null)
+  const [room, setRoom] = useState<any>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
-  const [participants, setParticipants] = useState<Participant[]>([])
+  const [participants, setParticipants] = useState<any[]>([])
   const [currentCallSession, setCurrentCallSession] = useState<CallSession | null>(null)
   const [currentTransfer, setCurrentTransfer] = useState<TransferSession | null>(null)
 
   // Audio states
   const [isMuted, setIsMuted] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
-  const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null)
+  const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
 
   // Transfer and transcript states
   const [transcript, setTranscript] = useState("")
@@ -80,6 +77,7 @@ export default function WarmTransferPage() {
   const [transferStep, setTransferStep] = useState<"idle" | "briefing" | "completing" | "completed">("idle")
   const [callSummary, setCallSummary] = useState("")
   const [agentScript, setAgentScript] = useState("")
+  const [transferCompleted, setTransferCompleted] = useState(false)
 
   // UI states
   const [showTransferModal, setShowTransferModal] = useState(false)
@@ -88,7 +86,7 @@ export default function WarmTransferPage() {
   const [logs, setLogs] = useState<string[]>([])
 
   // Refs
-  const roomRef = useRef<Room | null>(null)
+  const roomRef = useRef<any>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
 
   // ... existing code for all the functions (addLog, useEffect, setupRoomEvents, etc.) ...
@@ -108,7 +106,7 @@ export default function WarmTransferPage() {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-        } as AudioCaptureOptions)
+        } as any)
         setLocalAudioTrack(audioTrack)
         addLog("Local audio track initialized")
       } catch (error) {
@@ -127,43 +125,58 @@ export default function WarmTransferPage() {
   }, [])
 
   // Room event handlers
-  const setupRoomEvents = (room: Room) => {
+  const setupRoomEvents = (room: any) => {
     room.on(RoomEvent.Connected, () => {
       addLog(`Connected to room: ${room.name}`)
       setIsConnected(true)
       setIsConnecting(false)
-      setParticipants(Array.from(room.remoteParticipants.values()))
+      // Wait a bit for all initial participants to be properly registered
+      setTimeout(() => {
+        setParticipants(Array.from(room.remoteParticipants.values()))
+      }, 100)
     })
 
     room.on(RoomEvent.Disconnected, () => {
       addLog("Disconnected from room")
       setIsConnected(false)
       setParticipants([])
+      // Clean up any audio elements
+      const audioElements = document.querySelectorAll('audio[id^="audio-"]')
+      audioElements.forEach(el => el.remove())
     })
 
-    room.on(RoomEvent.ParticipantConnected, (participant: Participant) => {
+    room.on(RoomEvent.ParticipantConnected, (participant: any) => {
+      if (!participant || !participant.identity) {
+        addLog("Warning: ParticipantConnected event with invalid participant")
+        return
+      }
       addLog(`Participant connected: ${participant.identity}`)
-      setParticipants((prev) => [...prev, participant])
-
-      // Subscribe to participant's tracks
-      participant.on(ParticipantEvent.TrackSubscribed, (track: RemoteTrack, publication: TrackPublication) => {
-        if (track.kind === Track.Kind.Audio) {
-          const audioElement = document.createElement("audio")
-          audioElement.autoplay = true
-          audioElement.controls = false
-          ;(track as RemoteAudioTrack).attach(audioElement)
-          document.body.appendChild(audioElement)
-          addLog(`Subscribed to audio track from ${participant.identity}`)
+      setParticipants((prev) => {
+        // Avoid duplicates
+        const exists = prev.find(p => p.identity === participant.identity)
+        if (exists) {
+          return prev
         }
+        return [...prev, participant]
       })
     })
 
-    room.on(RoomEvent.ParticipantDisconnected, (participant: Participant) => {
+    room.on(RoomEvent.ParticipantDisconnected, (participant: any) => {
+      if (!participant || !participant.identity) {
+        addLog("Warning: ParticipantDisconnected event with invalid participant")
+        return
+      }
       addLog(`Participant disconnected: ${participant.identity}`)
       setParticipants((prev) => prev.filter((p) => p.identity !== participant.identity))
+      // Clean up audio element for this participant
+      const audioElement = document.getElementById(`audio-${participant.identity}`)
+      if (audioElement) {
+        audioElement.remove()
+        addLog(`Cleaned up audio element for ${participant.identity}`)
+      }
     })
 
-    room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: Participant) => {
+    room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: any) => {
       try {
         const message = new TextDecoder().decode(payload)
         const data = JSON.parse(message)
@@ -179,17 +192,101 @@ export default function WarmTransferPage() {
 
     room.on(
       RoomEvent.TrackSubscribed,
-      (track: RemoteTrack, publication: TrackPublication, participant: Participant) => {
-        if (track.kind === Track.Kind.Audio) {
+      (track: any, publication: any, participant: any) => {
+        // Enhanced safety checks for participant and track
+        if (!participant || !participant.identity) {
+          addLog("Warning: Track subscribed but participant is null or invalid")
+          return
+        }
+        
+        if (!track || !publication) {
+          addLog(`Warning: Invalid track or publication for participant ${participant.identity}`)
+          return
+        }
+        
+        // Verify participant exists in room before handling track
+        const roomParticipant = room.remoteParticipants.get(participant.sid)
+        if (!roomParticipant) {
+          addLog(`Warning: Participant ${participant.identity} (${participant.sid}) not found in room when subscribing track`)
+          // Try to handle it anyway after a delay to allow participant registration
+          setTimeout(() => {
+            const retryParticipant = room.remoteParticipants.get(participant.sid)
+            if (retryParticipant) {
+              addLog(`Retry: Found participant ${participant.identity}, handling track`)
+              handleTrackSubscribed(track, publication, participant)
+            } else {
+              addLog(`Retry failed: Participant ${participant.identity} still not found, skipping track`)
+            }
+          }, 200)
+          return
+        }
+        
+        handleTrackSubscribed(track, publication, participant)
+      },
+    )
+    
+    // Helper function to handle track subscription
+    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
+      if (track.kind === Track.Kind.Audio) {
+        try {
           const audioElement = document.createElement("audio")
           audioElement.autoplay = true
           audioElement.controls = false
-          ;(track as RemoteAudioTrack).attach(audioElement)
+          audioElement.id = `audio-${participant.identity}`
+          
+          // Remove existing audio element for this participant
+          const existing = document.getElementById(`audio-${participant.identity}`)
+          if (existing) {
+            existing.remove()
+          }
+          
+          ;(track as any).attach(audioElement)
           document.body.appendChild(audioElement)
           addLog(`Audio track subscribed from ${participant.identity}`)
+        } catch (error) {
+          console.error(`Failed to attach audio track from ${participant.identity}:`, error)
+          addLog(`Error attaching audio track from ${participant.identity}: ${error}`)
+        }
+      }
+    }
+
+    room.on(
+      RoomEvent.TrackUnsubscribed,
+      (track: any, publication: any, participant: any) => {
+        if (!participant || !participant.identity) {
+          addLog("Warning: Track unsubscribed but participant is null or invalid")
+          return
+        }
+        
+        if (track && track.kind === Track.Kind.Audio) {
+          const audioElement = document.getElementById(`audio-${participant.identity}`)
+          if (audioElement) {
+            try {
+              audioElement.remove()
+              addLog(`Audio track unsubscribed from ${participant.identity}`)
+            } catch (error) {
+              console.error(`Error removing audio element for ${participant.identity}:`, error)
+            }
+          }
         }
       },
     )
+    
+    // Add error handling for connection issues
+    room.on(RoomEvent.ConnectionStateChanged, (state: any) => {
+      addLog(`Connection state changed: ${state}`)
+      if (state === 'disconnected' || state === 'failed') {
+        // Clean up any orphaned audio elements
+        const audioElements = document.querySelectorAll('audio[id^="audio-"]')
+        audioElements.forEach(el => {
+          try {
+            el.remove()
+          } catch (error) {
+            console.error('Error cleaning up audio element:', error)
+          }
+        })
+      }
+    })
   }
 
   // Fetch latest call (for Agent A)
@@ -298,6 +395,8 @@ export default function WarmTransferPage() {
       return
     }
 
+    setError("") // Clear any previous errors
+
     try {
       // Get transfer details
       const transferResponse = await fetch(`${API_BASE}/transfer/${transferId}`)
@@ -329,6 +428,9 @@ export default function WarmTransferPage() {
       addLog(`Joined transfer session as Agent B (${agentBIdentity}): ${transferId}`)
       setShowTransferModal(true)
       
+      // Clear error on successful connection
+      setError("")
+      
     } catch (error) {
       console.error("Failed to join transfer:", error)
       setError("Failed to join transfer session")
@@ -347,6 +449,120 @@ export default function WarmTransferPage() {
     }
   }, [userRole, isConnected])
 
+  // Clear error when Agent B successfully connects
+  useEffect(() => {
+    if (userRole === "agent_b" && isConnected) {
+      setError("") // Clear any connection errors when successfully connected
+    }
+  }, [userRole, isConnected])
+
+  // Check for completed transfers (for Agent B)
+  const checkCompletedTransfers = async () => {
+    if (!userName.trim()) return
+    
+    try {
+      // Check Agent B specific transfer status endpoint
+      const agentBIdentity = `agent_b_${userName}`
+      const response = await fetch(`${API_BASE}/agent/${agentBIdentity}/transfer-status`)
+      if (!response.ok) {
+        addLog(`No completed transfers found for ${agentBIdentity}`)
+        return
+      }
+      
+      const data = await response.json()
+      addLog(`📊 Agent B transfer status: ${JSON.stringify(data)}`)
+      
+      if (data.transfer_complete) {
+        addLog(`🔄 Transfer completed! Agent B joining final room: ${data.final_room}`)
+        await joinFinalTransferRoomDirect(data.agent_token, data.final_room, LIVEKIT_URL)
+      }
+    } catch (error) {
+      console.error("Failed to check completed transfers:", error)
+      addLog(`❌ Error checking Agent B transfer status: ${error}`)
+    }
+  }
+
+  // Join final transfer room (for Agent B) - using transfer ID
+  const joinFinalTransferRoom = async (transferId: string) => {
+    try {
+      // Get transfer details
+      const transferResponse = await fetch(`${API_BASE}/transfer/${transferId}`)
+      if (!transferResponse.ok) throw new Error("Failed to get transfer details")
+      
+      const transferData = await transferResponse.json()
+      
+      // Generate token for Agent B to join final room
+      const agentBIdentity = `agent_b_${userName}`
+      const tokenResponse = await fetch(`${API_BASE}/token?identity=${agentBIdentity}&room=${transferData.transfer_room}`)
+      if (!tokenResponse.ok) throw new Error("Failed to get Agent B final room token")
+      
+      const tokenData = await tokenResponse.json()
+      
+      // Connect to final room
+      const finalRoom = new Room()
+      setupRoomEvents(finalRoom)
+      
+      await finalRoom.connect(tokenData.url, tokenData.token)
+      
+      if (localAudioTrack) {
+        await finalRoom.localParticipant.publishTrack(localAudioTrack)
+      }
+      
+      // Replace current room
+      if (room) {
+        await room.disconnect()
+        addLog(`Agent B disconnected from briefing room`)
+      }
+      
+      setRoom(finalRoom)
+      roomRef.current = finalRoom
+      addLog(`✅ Agent B successfully joined final room with caller: ${transferData.transfer_room}`)
+      addLog(`🎯 Agent B is now with the caller`)
+      
+    } catch (error) {
+      console.error("Failed to join final transfer room:", error)
+      addLog(`❌ Agent B failed to join final room: ${error}`)
+    }
+  }
+
+  // Join final transfer room directly with token (for Agent B) - using provided token
+  const joinFinalTransferRoomDirect = async (token: string, roomName: string, livekitUrl: string) => {
+    try {
+      addLog(`🔄 Agent B connecting to final room: ${roomName}`)
+      
+      // Connect to final room with provided token
+      const finalRoom = new Room()
+      setupRoomEvents(finalRoom)
+      
+      await finalRoom.connect(livekitUrl, token)
+      addLog(`✅ Agent B successfully connected to LiveKit server`)
+      
+      if (localAudioTrack) {
+        await finalRoom.localParticipant.publishTrack(localAudioTrack)
+        addLog(`🎤 Agent B published audio track`)
+      }
+      
+      // Replace current room
+      if (room) {
+        await room.disconnect()
+        addLog(`📤 Agent B disconnected from briefing room`)
+      }
+      
+      setRoom(finalRoom)
+      roomRef.current = finalRoom
+      addLog(`✅ Agent B successfully joined final room with caller: ${roomName}`)
+      addLog(`🎯 Agent B is now with the caller - transfer complete!`)
+      
+      // Close transfer modal if open
+      setShowTransferModal(false)
+      
+    } catch (error) {
+      console.error("Failed to join final transfer room directly:", error)
+      addLog(`❌ Agent B failed to join final room: ${error}`)
+      setError("Failed to join final room with caller")
+    }
+  }
+
   // Check caller transfer status
   const checkCallerTransferStatus = async () => {
     if (!userName.trim()) return
@@ -364,7 +580,11 @@ export default function WarmTransferPage() {
       
       if (data.transfer_complete) {
         addLog(`🔄 Transfer completed! Joining Agent B in room: ${data.final_room}`)
-        await connectToFinalRoom(data.caller_token, data.final_room)
+        await connectToFinalRoom(data.caller_token, data.final_room, data.livekit_url)
+        
+        // Stop polling after successful transfer
+        addLog(`📌 Stopping transfer status polling - transfer complete`)
+        setTransferCompleted(true)
       }
     } catch (error) {
       console.error("Failed to check transfer status:", error)
@@ -375,8 +595,19 @@ export default function WarmTransferPage() {
   // Poll for transfer completion when caller is connected
   useEffect(() => {
     let interval: NodeJS.Timeout
-    if (userRole === "caller" && isConnected && userName.trim()) {
+    if (userRole === "caller" && isConnected && userName.trim() && !transferCompleted) {
       interval = setInterval(checkCallerTransferStatus, 3000) // Poll every 3 seconds
+    }
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [userRole, isConnected, userName, transferCompleted])
+
+  // Poll for completed transfers when Agent B is connected
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (userRole === "agent_b" && isConnected && userName.trim()) {
+      interval = setInterval(checkCompletedTransfers, 3000) // Poll every 3 seconds
     }
     return () => {
       if (interval) clearInterval(interval)
@@ -648,7 +879,7 @@ export default function WarmTransferPage() {
 
       // If caller, connect to final room with Agent B
       if (userRole === "caller") {
-        await connectToFinalRoom(result.caller_token, result.final_room)
+        await connectToFinalRoom(result.caller_token, result.final_room, currentTransfer.livekit_url)
       }
 
       // If Agent A, disconnect after briefing
@@ -669,14 +900,20 @@ export default function WarmTransferPage() {
   }
 
   // Connect to final room (for caller)
-  const connectToFinalRoom = async (token: string, roomName: string) => {
+  const connectToFinalRoom = async (token: string, roomName: string, livekitUrl?: string) => {
     try {
       addLog(`Attempting to connect caller to final room: ${roomName}`)
+      addLog(`Received livekitUrl: ${livekitUrl || 'undefined'}`)
+      addLog(`currentTransfer?.livekit_url: ${currentTransfer?.livekit_url || 'undefined'}`)
       
       const finalRoom = new Room()
       setupRoomEvents(finalRoom)
 
-      await finalRoom.connect(currentTransfer!.livekit_url, token)
+      // Use the provided livekit_url first, then fallback to default
+      const url = livekitUrl || "wss://warm-call-transfer-cqwz2dbd.livekit.cloud"
+      addLog(`Using LiveKit URL: ${url}`)
+      
+      await finalRoom.connect(url, token)
       addLog(`Successfully connected to LiveKit server`)
 
       if (localAudioTrack) {
@@ -734,10 +971,21 @@ export default function WarmTransferPage() {
 
   // Toggle mute
   const toggleMute = () => {
-    if (localAudioTrack) {
+    if (localAudioTrack && localAudioTrack.setEnabled) {
       localAudioTrack.setEnabled(!isMuted)
       setIsMuted(!isMuted)
       addLog(`Audio ${isMuted ? "unmuted" : "muted"}`)
+    } else if (localAudioTrack && localAudioTrack.mute) {
+      // Alternative method for some versions of LiveKit
+      if (isMuted) {
+        localAudioTrack.unmute()
+      } else {
+        localAudioTrack.mute()
+      }
+      setIsMuted(!isMuted)
+      addLog(`Audio ${isMuted ? "unmuted" : "muted"}`)
+    } else {
+      addLog("Audio track not available for muting")
     }
   }
 
@@ -771,6 +1019,7 @@ export default function WarmTransferPage() {
     setTranscript("")
     setCallSummary("")
     setAgentScript("")
+    setTransferCompleted(false)
     addLog("Disconnected from call")
   }
 

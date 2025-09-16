@@ -495,6 +495,25 @@ def get_caller_transfer_status(caller_name: str):
     
     return {"transfer_complete": False}
 
+@app.get("/agent/{agent_name}/transfer-status")
+def get_agent_transfer_status(agent_name: str):
+    """Check if Agent B should move to final room for completed transfer"""
+    for transfer_id, session in transfer_sessions.items():
+        if (session["agent_b"] == agent_name and 
+            session["status"] == "completed"):
+            # Generate fresh token for Agent B
+            agent_token = generate_token(agent_name, session["transfer_room"])
+            return {
+                "transfer_complete": True,
+                "transfer_id": transfer_id,
+                "final_room": session["transfer_room"],
+                "caller_name": session["caller_name"],
+                "agent_token": agent_token,
+                "livekit_url": LIVEKIT_URL
+            }
+    
+    return {"transfer_complete": False}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
