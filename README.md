@@ -2,6 +2,9 @@
 
 A real-time communication application built with **LiveKit**, **FastAPI**, and **Next.js** that enables seamless warm call transfers between agents in a call center environment. The system includes AI-powered call summaries and automated transfer workflows.
 
+📹 Video Walkthrough: https://www.loom.com/share/32fdd169858c46e7b7dc8f001113849f?sid=dc2da037-3cb0-491a-a562-77965285683b
+
+
 ## 🚀 Features
 
 - **Real-time Audio Communication**: WebRTC-based audio calling using LiveKit
